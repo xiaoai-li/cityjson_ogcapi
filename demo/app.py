@@ -60,10 +60,16 @@ def collection(dataset):
 def items(dataset):
     #-- fetch the dataset, invalid if not found
     cm = getcm(dataset)
+    # print("original",len(cm.j['CityObjects']))
     if cm == None:
         return JINVALIDCOLLECTION
+    randomid=list(cm.j['CityObjects'].keys())[0]
+    attributes=[]
+    if 'attributes' in cm.j['CityObjects'][randomid]:
+        attributes=cm.j['CityObjects'][randomid]['attributes'].items()
     #-- bbox
-    re_bbox = request.args.get('bbox', None) # TODO : only 2D bbox? I'd say yes, but should be discussed...
+    origianlbbx=cm.j['metadata']['geographicalExtent']
+    re_bbox = request.args.get('bbox', None)  # TODO : only 2D bbox? I'd say yes, but should be discussed...
     if re_bbox is not None:
         r = re_bbox.split(',')
         if len(r) != 4:
@@ -73,21 +79,22 @@ def items(dataset):
         except:
             return JINVALIDFORMAT
         cm = cm.get_subset_bbox(bbox=b, exclude=False)
-    #-- bbox
-    re_bbox = request.args.get('bbox', None) # TODO : only 2D bbox? I'd say yes, but should be discussed...
-    if re_bbox is not None:
-        r = re_bbox.split(',')
-        if len(r) != 4:
-            return JINVALIDFORMAT
-        try:
-            b = list(map(float, r))
-        except:
-            return JINVALIDFORMAT
-        cm = cm.get_subset_bbox(bbox=b, exclude=False)
-    #-- bbox
+        # print("bbox",len(cm.j['CityObjects']))
+
+    #-- attr
+    re = request.args.get('attrname', None)
+    attrname = re
+    re = request.args.get('value', None)
+    value = re
+    re = request.args.get('compare', None)
+    compare= re
+    if attrname and value and compare:
+        cm = cm.filter_attr(attrname,value,compare)
+
+    #-- limit
     re = request.args.get('limit', None)
     if re is None:
-        re_limit = 10
+        re_limit = 20
     else:
         re_limit = int(re)
     #-- offset
@@ -96,16 +103,23 @@ def items(dataset):
         re_offset = 0
     else:
         re_offset = int(re)
-    #-- html/json        
     theids = cm.get_ordered_ids_top_co(limit=re_limit, offset=re_offset)
-    cm = cm.get_subset_ids(theids, exclude=False)
+    # print("limited",len(theids))
+
+    sibling_include=not(attrname and value and compare)
+    print("sibling_include",sibling_include)
+    cm= cm.get_subset_ids(theids, exclude=False)
+    # print("subset",len(cm.j['CityObjects']))
+
     re_f = request.args.get('f', None)
+    #-- html/json
     if re_f == 'html' or re_f is None:
-        return render_template("items.html", datasetname=dataset, jcm=cm.j, limit=re_limit, offset=re_offset)
+        return render_template("items.html", datasetname=dataset,bbox=origianlbbx,jcm=cm.j,attrs=attributes, limit=re_limit, offset=0)
     elif re_f == 'json':
         return cm.j
     else:
         return JINVALIDFORMAT
+
 
 
 @app.route('/collections/<dataset>/items/<featureID>/', methods=['GET']) #-- html/json
@@ -212,8 +226,8 @@ def collection_stream(dataset):
             s = json.dumps(f)
             s += "\n"
             yield s
-    return Response(generate(), mimetype='application/json-seq')
-    # return Response(generate(), mimetype='text/plain')
+    # return Response(generate(), mimetype='application/json-seq')
+    return Response(generate(), mimetype='text/plain')
 
 
 
