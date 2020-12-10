@@ -258,11 +258,12 @@ def query_items(file_name, schema_name,limit=20,offset=0,bbox=None):
     # TODO: offset should be within the total length
     if bbox: # TODO: modify later to add simblings
         query_cityobjects = """SELECT city_object.id, city_object.object, city_object.attributes
-                                     FROM {}.city_object
-                                     WHERE object  ->> 'type' in {} 
-                                     AND city_object.metadata_id = LOWER(%s)
-                                     LIMIT {} OFFSET {}""" \
-            .format(schema_name, TOPLEVEL, limit, offset)
+                               FROM {}.city_object
+                               WHERE city_object.metadata_id=LOWER(%s) AND
+                               ST_Intersects(convexhull,
+                               ST_Envelope('SRID={};LINESTRING({} {},{} {})'::geometry))
+                               LIMIT {} OFFSET {}""" \
+            .format(schema_name, 7415,bbox[0], bbox[1],bbox[2],bbox[3],limit, offset)
     else:
         query_cityobjects = """SELECT city_object.id, city_object.object, city_object.attributes
                                      FROM {}.city_object

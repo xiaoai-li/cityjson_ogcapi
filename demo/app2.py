@@ -64,19 +64,6 @@ def collection(dataset):
 # http://data.example.org/collections/buildings/items.json?limit=50&offset=50
 @app.route('/collections/<dataset>/items/', methods=['GET']) #-- html/json/bbox/limit/offset
 def items(dataset):
-
-    #-- bbox
-    re_bbox = request.args.get('bbox', None)  # TODO : only 2D bbox? I'd say yes, but should be discussed...
-    if re_bbox is not None:
-        r = re_bbox.split(',')
-        if len(r) != 4:
-            return JINVALIDFORMAT
-        try:
-            b = list(map(float, r))
-        except:
-            return JINVALIDFORMAT
-
-
     #-- limit
     re = request.args.get('limit', None)
     if re is None:
@@ -89,8 +76,19 @@ def items(dataset):
         re_offset = 0
     else:
         re_offset = int(re)
-
-    cm=query_items(dataset, 'test',limit=re_limit,offset=re_offset,bbox=b)
+    #-- bbox
+    re_bbox = request.args.get('bbox', None)  # TODO : only 2D bbox? I'd say yes, but should be discussed...
+    if re_bbox is not None:
+        r = re_bbox.split(',')
+        if len(r) != 4:
+            return JINVALIDFORMAT
+        try:
+            b = list(map(float, r))
+            cm = query_items(dataset, 'test', limit=re_limit, offset=re_offset, bbox=b)
+        except:
+            return JINVALIDFORMAT
+    else:
+        cm=query_items(dataset, 'test',limit=re_limit,offset=re_offset)
 
     re_f = request.args.get('f', None)
     #-- html/json
