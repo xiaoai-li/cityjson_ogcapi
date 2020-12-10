@@ -4,7 +4,7 @@ from cjio import cityjson
 import json
 import os
 
-from query_PostgreSQL import query_collections,query_items,query_feature
+from query_PostgreSQL import query_collections,query_items,query_feature,query_collection
 
 # query_PostgreSQL("delft", "test")
 # query_sentence = str("delft" + ' is queried from PostgreSQL')
@@ -41,7 +41,6 @@ def collections():
         return jindex
     else:
         return JINVALIDFORMAT
-
 
 
 @app.route('/collections/<dataset>/', methods=['GET']) #-- html/json
@@ -98,7 +97,6 @@ def items(dataset):
         return cm.j
     else:
         return JINVALIDFORMAT
-
 
 
 @app.route('/collections/<dataset>/items/<featureID>/', methods=['GET']) #-- html/json
@@ -181,7 +179,7 @@ def visualise(dataset):
 @app.route('/collections/<dataset>/stream/')
 def collection_stream(dataset):
     #-- fetch the dataset, invalid if not found
-    cm = getcm(dataset)
+    cm = query_collection(dataset,"test")
     if cm == None:
         return JINVALIDCOLLECTION
     # line-delimited JSON generator
@@ -199,6 +197,6 @@ def collection_stream(dataset):
             s = json.dumps(f)
             s += "\n"
             yield s
-    # return Response(generate(), mimetype='application/json-seq')
-    return Response(generate(), mimetype='text/plain')
+    return Response(generate(), mimetype='application/json-seq')
+    # return Response(generate(), mimetype='text/plain')
 

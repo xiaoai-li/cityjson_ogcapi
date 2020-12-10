@@ -121,7 +121,6 @@ def items(dataset):
         return JINVALIDFORMAT
 
 
-
 @app.route('/collections/<dataset>/items/<featureID>/', methods=['GET']) #-- html/json
 def item(dataset, featureID):
     re = request.args.get('f', None)
@@ -167,12 +166,12 @@ def item(dataset, featureID):
 def not_found(error):
     return render_template('404.html'), 404
 
-def getcm(filename):
-    p = PATHDATASETS + filename + '.json'
-    if os.path.isfile(p) == False:
-        return None
-    f = open(p)
-    return cityjson.reader(file=f, ignore_duplicate_keys=True)
+# def getcm(filename):
+#     p = PATHDATASETS + filename + '.json'
+#     if os.path.isfile(p) == False:
+#         return None
+#     f = open(p)
+#     return cityjson.reader(file=f, ignore_duplicate_keys=True)
 
 
 @app.route('/collections/<dataset>/visualise/', methods=['GET'])
